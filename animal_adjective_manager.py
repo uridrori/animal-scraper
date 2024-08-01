@@ -1,8 +1,5 @@
 from collections import defaultdict
-import threading
 from scraper import WikipediaScraper
-from image_downloader import ImageDownloader
-import os
 
 
 class AnimalAdjectiveManager:
@@ -10,7 +7,7 @@ class AnimalAdjectiveManager:
         self.animal_adjectives = defaultdict(list)
 
     def parse_table(self, html_content):
-        table = WikipediaScraper.parse_html(html_content)
+        table = WikipediaScraper.parse_html(html_content)[0]
         image_download_threads = []
 
         headers = [header.text.strip() for header in table.find('tr').find_all('th')]
@@ -27,22 +24,10 @@ class AnimalAdjectiveManager:
                     animal += f" ({columns[trivial_col].text.strip()})"
                 adjectives = columns[adjective_col].text.strip().split(',')
 
-                img_tag = columns[animal_col].find('img')
-                img_url = ImageDownloader.get_image_url(img_tag) if img_tag else None
-
-                if img_url:
-                    thread = threading.Thread(target=self._download_and_add_image, args=(img_url, animal, adjectives))
-                    image_download_threads.append(thread)
-                    thread.start()
-                else:
-                    self._add_animal_adjectives(animal, adjectives)
+                self._add_animal_adjectives(animal, adjectives)
 
         for thread in image_download_threads:
             thread.join()
-
-    def _download_and_add_image(self, img_url, animal, adjectives):
-        img_path = ImageDownloader.download_image(img_url, animal)
-        self._add_animal_adjectives(animal, adjectives, img_path)
 
     def _add_animal_adjectives(self, animal, adjectives, img_path=None):
         for adj in adjectives:
@@ -54,7 +39,7 @@ class AnimalAdjectiveManager:
         with open(filename, 'w') as f:
             f.write('<html><body>')
             for adjective, animals in self.animal_adjectives.items():
-                f.write(f'<h2>Collateral adjective: {adjective}</h2>')
+                f.write(f'<h2>{adjective}</h2>')
                 f.write('<ul>')
                 for animal, img_path in animals:
                     if img_path:
