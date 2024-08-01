@@ -13,4 +13,5 @@ class WikipediaScraper:
     @staticmethod
     def parse_html(html_content):
         soup = BeautifulSoup(html_content, 'html.parser')
+        # Find all tables with class 'wikitable' in the HTML
         return soup.find_all('table', {'class': 'wikitable'})

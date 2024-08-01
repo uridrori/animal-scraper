@@ -6,12 +6,15 @@ from scraper import WikipediaScraper
 
 class AnimalAdjectiveManager:
     def __init__(self):
+        # Use a defaultdict to store a list of animals for each adjective
         self.animal_adjectives = defaultdict(list)
 
     def parse_table(self, html_content):
         table = WikipediaScraper.parse_html(html_content)[0]
+        # Find the header row and extract column names
         headers = [header.text.strip() for header in table.find('tr').find_all('th')]
 
+        # Find the column indices for the required columns
         animal_col = headers.index('Scientific term') if 'Scientific term' in headers else headers.index('Animal')
         trivial_col = headers.index('Trivial name') if 'Trivial name' in headers else None
         adjective_col = headers.index('Collateral adjective')
@@ -21,6 +24,7 @@ class AnimalAdjectiveManager:
             futures = []
             for row in table.find_all('tr')[1:]:  # Skip header row
                 columns = row.find_all('td')
+                # Ensure the required columns are present
                 if len(columns) > max(animal_col, adjective_col):
                     future = executor.submit(self._process_row, columns, animal_col, trivial_col, adjective_col)
                     futures.append(future)
@@ -40,16 +44,17 @@ class AnimalAdjectiveManager:
 
         self._add_animal_adjectives(animal, cleaned_adjectives)
 
-    def _clean_text(self, text):
+    @staticmethod
+    def _clean_text(text):
         # Use regex to retain only alphabetic characters and spaces
         cleaned_text = re.sub(r'[^a-zA-Z\s]', '', text)
         return cleaned_text.strip()
 
-    def _add_animal_adjectives(self, animal, adjectives, img_path=None):
+    def _add_animal_adjectives(self, animal, adjectives):
         for adj in adjectives:
             adj = adj.strip()
             if adj:
-                self.animal_adjectives[adj].append((animal, img_path))
+                self.animal_adjectives[adj].append(animal)
 
     def output_to_html(self, filename):
         with open(filename, 'w') as f:

@@ -1,9 +1,6 @@
-# TODO: inspect all files
-# TODO: add comments and/or docstrings
 
 from scraper import WikipediaScraper
 from animal_adjective_manager import AnimalAdjectiveManager
-import os
 
 
 def main():
